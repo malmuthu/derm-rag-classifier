@@ -1,0 +1,2 @@
+embedding_checkpoint: checkpoints/vit_b_16_dropout/best_model.pt
+mel_threshold: 0.3

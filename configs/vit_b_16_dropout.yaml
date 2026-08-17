@@ -1,0 +1,20 @@
+backbone: vit_b_16
+seed: 42
+
+use_weighted_sampler: false
+
+data:
+  batch_size: 32
+  num_workers: 4
+
+phase1:
+  epochs: 5
+  learning_rate: 0.001
+  weight_decay: 0.0001
+
+phase2:
+  epochs: 15
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+
+checkpoint_dir: checkpoints/vit_b_16_dropout
