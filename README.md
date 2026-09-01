@@ -226,9 +226,12 @@ Models and the retrieval inde are loaded once and cached.
 - This is a portfolio/research project, not a validated clinical tool, and is not
   intended for diagnostic use.
 
-  ## References
+---
 
-  - Tschandl, Philipp. 2018. “The HAM10000 Dataset, a Large Collection of Multi-Source Dermatoscopic Images of Common Pigmented Skin Lesions.” Harvard Dataverse. https://doi.org/10.7910/DVN/DBW86T.
-  Data used under [CC BY-NC 4.0]
+## References
 
-  - Guo, Chuan, Geoff Pleiss, Yu Sun, and Kilian Q. Weinberger. "On calibration of modern neural networks." In International conference on machine learning, pp. 1321-1330. PMLR, 2017.
+- Tschandl, Philipp. 2018. “The HAM10000 Dataset, a Large Collection of Multi-Source Dermatoscopic Images of Common Pigmented Skin Lesions.” Harvard Dataverse. https://doi.org/10.7910/DVN/DBW86T.
+
+Data used under [CC BY-NC 4.0]
+
+- Guo, Chuan, Geoff Pleiss, Yu Sun, and Kilian Q. Weinberger. "On calibration of modern neural networks." In International conference on machine learning, pp. 1321-1330. PMLR, 2017.
