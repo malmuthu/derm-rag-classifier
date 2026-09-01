@@ -10,11 +10,7 @@ A skin lesion classifier (ResNet50 / ViT-B/16, trained on HAM10000)combined with
 
 ![Demo - initial state](docs/demo_empty.png)
 
-**After uploading a lesion image:**
-
-![Demo - result](docs/demo_result.png)
-
-*Streamlit demo showing a classification, calibrated confiedence, and a grounded explanation referencing retrieved similar cases from the training set. (Uploaded image panel omitted from the result screenshot - see [Setup](#setup) to run the app and see the full interface.)*
+*Streamlit demo - upload a dermoscopy image to get classification, calibrated confidence, and a grounded explanation referencing retrieved similar cases from the training set. (Uploaded image panel omitted from the result screenshot - see [Setup](#setup) to run the app and see the full interface.)*
 
 Run locally:
 ```bash
