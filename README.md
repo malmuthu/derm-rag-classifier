@@ -1,10 +1,25 @@
 # Dermatology Lesion Classifier + Retrieval-Augmented Explanation
 
-A skin lesion classifier (ResNet50 / ViT-B/16, trained on HAM10000) combined with a
-retrieval layer that surfaces visually similar historical cases for any prediction —
-built to move beyond a bare classification label toward a grounded, evidence-backed
-explanation. All evaluation here is done via macro-averaged metrics and per-class breakdowns, computed on a *lesion-level* held-out test set with
-   leakage explicitly checked and tested for
+A skin lesion classifier (ResNet50 / ViT-B/16, trained on HAM10000)combined with a retrieval layer that surfaces visually similar historical cases, and a grounded explanation layer. Built to move beyond a bare classification label toward a grounded, evidence-backed explanation. All evaluation here is done via macro-averaged metrics and per-class breakdowns, computed on a *lesion-level* held-out test set.
+
+---
+
+## Demo
+
+**Initial state:**
+
+![Demo - initial state](docs/demo_empty.png)
+
+**After uploading a lesion image:**
+
+![Demo - result](docs/demo_result.png)
+
+*Streamlit demo showing a classification, calibrated confiedence, and a grounded explanation referencing retrieved similar cases from the training set. (Uploaded image panel omitted from the result screenshot - see [Setup](#setup) to run the app and see the full interface.)*
+
+Run locally:
+```bash
+streamlit run app.py
+```
 
 ---
 
@@ -12,15 +27,18 @@ explanation. All evaluation here is done via macro-averaged metrics and per-clas
 
 ```
 derm-rag-classifier/
+├── app.py                 # Streamlit demo
 ├── configs/
-├── data/                  # gitignored - raw images, processed splits, case DB
-├── notebooks/
+├── data/                  # gitignored - raw images, processed splits, 
+├── docs/                  # README images from demo  
+├── notebooks/             # EDA only
 ├── src/
 │   ├── data/              # Dataset/DataLoader
-│   ├── models/            # model factory, losses, training loop, evaluation
+│   ├── models/            # model factory, losses, training loop, evaluation, calibration
 │   ├── retrieval/         # embeddings, FAISS index, similarity search
+│   ├── explain/           # templated, grounded explanation generation
 │   ├── utils/             # shared config loading
-├── tests/                 # pytest - data integrity + retrieval quality         
+├── tests/                 # pytest - data integrity, model, retrieval, and explanation tests       
 └── checkpoints/           # gitignored
 ```
 
@@ -32,7 +50,7 @@ derm-rag-classifier/
 conda create -n derm-rag python=3.11
 conda activate derm-rag
 pip install pandas numpy matplotlib pillow scikit-learn pyyaml torch torchvision \
-            faiss-cpu tqdm pytest jupyter ipykernel
+            faiss-cpu tqdm pytest jupyter ipykernel streamlit
 ```
 
 Download HAM10000 and place it at:
@@ -46,8 +64,14 @@ data/raw/HAM10000_images_part_2/
 python src/data/make_splits.py          # lesion-level train/val/test split
 python src/models/train.py --config configs/resnet50_dropout.yaml
 python src/models/train.py --config configs/vit_b_16_dropout.yaml
+python src/models/fit_calibration.py    # temperature scaling
 python src/retrieval/build_case_db.py   # embed training images
 python src/retrieval/build_index.py     # build FAISS index
+```
+
+Run the demo:
+```bash
+streamlit run app.py
 ```
 
 Run tests:
@@ -94,6 +118,7 @@ augmentation, same optimizer schedule) to isolate the effect of architecture cho
 Chosen over full fine-tuning to reduce the risk of catastrophic forgetting on a
 dataset of this size. Note ResNet's partial split and ViT's are not equivalently conservative in practice,
 despite both being "partial fine-tuning" by layer count. Documented rather than forced to match.
+Regression-tested in `tests/test_model_factory.py` to guard against silently reintroducing an unfreeze-split bug.
 
 ### Class imbalance handling
 
@@ -169,15 +194,28 @@ must show ≥3/5 top-5 match).
 
 ---
 
-## Current status and next steps
+## 4 — Explanation layer
 
-**In progress:**
-- **Stage 4 — explanation layer:** generating grounded text explanations from
-  retrieved cases (e.g., "resembles N similar cases, primarily diagnosed as X") without
-  hallucinating beyond what retrieval actually returned.
-- **Stage 5 — deployment:** an interactive demo (Streamlit) — upload an image, see
-  prediction + retrieved cases + explanation together.
-- **Stage 6 — polish:** finalize this document, add a model card.
+### Design: templated
+
+The explanation is assembled from a fixed structure filled with facts pulled directly from the classifier's output and the retrieved cases, so hallucination is structurally prevented. The template states: the predicted class and its calibrated confidence, how many of the retrieved cases share that diagnosis, and per-case detail for each retrieved case. 
+
+Faithfulness is regression-tested in `tests/test_explain.py`: every diagnosis mentioned in generated text is checked againts the actual retrieved cases, and the stated agreement count is checked against a real count.
+
+### Calibration
+
+Raw softmax confidence scores from neural networks can be overconfident, including on incorrect predictions. Temperature scaling (Guo et al., 2017) was applied post-hoc: a single scalar `T`, fit on the validation set via NLL minimization, divides the classifier's logits before softmax.
+
+It does not change the predicted class, only the reported confidence.
+
+---
+
+## 5 — Deployment
+
+A local Streamlit demo (`app.py`) wires the full pipeline together: image upload -> classification (calibrated) -> retrieval -> templated explanation, displayed together.
+Models and the retrieval inde are loaded once and cached.
+
+**Scope note:** the demo currently runs locally only.
 
 ---
 
@@ -191,3 +229,10 @@ must show ≥3/5 top-5 match).
   ground-truth source.
 - This is a portfolio/research project, not a validated clinical tool, and is not
   intended for diagnostic use.
+
+  ## References
+
+  - Tschandl, Philipp. 2018. “The HAM10000 Dataset, a Large Collection of Multi-Source Dermatoscopic Images of Common Pigmented Skin Lesions.” Harvard Dataverse. https://doi.org/10.7910/DVN/DBW86T.
+  Data used under [CC BY-NC 4.0]
+
+  - Guo, Chuan, Geoff Pleiss, Yu Sun, and Kilian Q. Weinberger. "On calibration of modern neural networks." In International conference on machine learning, pp. 1321-1330. PMLR, 2017.
